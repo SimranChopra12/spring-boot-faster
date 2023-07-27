@@ -24,44 +24,8 @@ public class TreeUtils {
      * Node::getNodeKey, Node::getParentKey,
      * Node::getChildren, Node::setChildren);
      */
-    public static <E, C extends Collection<E>> C toTree(
-            C nodes, Supplier<C> treeCreator,
-            Function<E, Serializable> keyGetter,
-            Function<E, Serializable> parentKeyGetter,
-            Function<E, C> childrenGetter,
-            BiConsumer<E, C> childrenSetter) {
-        if (nodes == null) {
-            return null;
-        }
-        if (keyGetter == null || treeCreator == null || parentKeyGetter == null
-                || childrenGetter == null || childrenSetter == null) {
-            throw new IllegalArgumentException("Operate methods missing");
-        }
-        C tree = treeCreator.get();
-        boolean single;
-        for (E node : nodes) {
-            // 没有父节点作为根节点
-            if (parentKeyGetter.apply(node) == null) {
-                tree.add(node);
-            } else {
-                single = true;
-                for (E parent : nodes) {
-                    // 有父节点ID，添加到它的父节点
-                    if (parentKeyGetter.apply(node).equals(keyGetter.apply(parent))) {
-                        if (childrenGetter.apply(parent) == null) {
-                            childrenSetter.accept(parent, treeCreator.get());
-                        }
-                        childrenGetter.apply(parent).add(node);
-                        single = false;
-                        break;
-                    }
-                }
-                // 没有找到父节点的也做为根节点
-                if (single) {
-                    tree.add(node);
-                }
-            }
-        }
+    public static <E, C extends Collection<E>> C toTree(TreeBuilder treeBuilder) {
+        C tree = (C) treeBuilder.build();
         return tree;
     }
 

@@ -1,7 +1,9 @@
 package canuran.faster.security;
 
 import canuran.common.utils.Asserts;
+import canuran.common.utils.TreeBuilder;
 import canuran.common.utils.TreeUtils;
+import canuran.faster.common.vo.DictionaryNode;
 import canuran.faster.dao.AuthorityDao;
 import canuran.faster.dao.RoleDao;
 import canuran.faster.dao.entity.Authority;
@@ -140,12 +142,17 @@ public class SecurityServiceImpl implements SecurityService {
                 .orderBy(authority.authorityId.asc())
                 .fitBean(AuthorityNode.class)
                 .fetch();
-        return TreeUtils.toTree(nodes,
-                ArrayList::new,
-                AuthorityNode::getAuthorityId,
-                AuthorityNode::getParentId,
-                AuthorityNode::getChildren,
-                AuthorityNode::setChildren);
+
+        TreeBuilder<AuthorityNode, List<AuthorityNode>> builder = new TreeBuilder<AuthorityNode, List<AuthorityNode>>()
+                .withNodes(nodes)
+                .withTreeCreator(ArrayList::new)
+                .withKeyGetter(AuthorityNode::getAuthorityId)
+                .withParentKeyGetter(AuthorityNode::getParentId)
+                .withChildrenGetter(AuthorityNode::getChildren)
+                .withChildrenSetter(AuthorityNode::setChildren);
+
+        List<AuthorityNode> tree = builder.build();
+        return tree;
     }
 
     @Override

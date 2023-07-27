@@ -2,6 +2,7 @@ package canuran.faster.common;
 
 import canuran.common.exception.BusinessException;
 import canuran.common.utils.Asserts;
+import canuran.common.utils.TreeBuilder;
 import canuran.common.utils.TreeUtils;
 import canuran.faster.common.vo.DictionaryNode;
 import canuran.faster.common.vo.FindDictionaryParam;
@@ -132,12 +133,17 @@ public class DictionaryServiceImpl implements DictionaryService {
 
         List<DictionaryNode> dictionaries = dictionaryDao
                 .findRootSubDictionaries(rootValues);
-        return TreeUtils.toTree(dictionaries,
-                ArrayList::new,
-                DictionaryNode::getDictionaryId,
-                DictionaryNode::getParentId,
-                DictionaryNode::getChildren,
-                DictionaryNode::setChildren);
+        TreeBuilder<DictionaryNode, List<DictionaryNode>> builder = new TreeBuilder<DictionaryNode, List<DictionaryNode>>()
+                .withNodes(dictionaries)
+                .withTreeCreator(ArrayList::new)
+                .withKeyGetter(DictionaryNode::getDictionaryId)
+                .withParentKeyGetter(DictionaryNode::getParentId)
+                .withChildrenGetter(DictionaryNode::getChildren)
+                .withChildrenSetter(DictionaryNode::setChildren);
+
+        List<DictionaryNode> tree = builder.build();
+        return tree;
+
     }
 
 }

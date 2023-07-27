@@ -1,5 +1,7 @@
 package canuran.faster.security;
 
+import canuran.common.utils.TreeBuilder;
+import canuran.faster.common.vo.DictionaryNode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import canuran.common.utils.TreeUtils;
 import canuran.faster.security.vo.AuthorityNode;
@@ -48,12 +50,16 @@ public class SecurityUser implements UserDetails {
      */
     public void setAuthorities(List<AuthorityNode> authorities) {
         this.authorities = authorities;
-        this.authorityTree = TreeUtils.toTree(authorities,
-                ArrayList::new,
-                AuthorityNode::getAuthorityId,
-                AuthorityNode::getParentId,
-                AuthorityNode::getChildren,
-                AuthorityNode::setChildren);
+
+        TreeBuilder<AuthorityNode, List<AuthorityNode>> builder = new TreeBuilder<AuthorityNode, List<AuthorityNode>>()
+                .withNodes(authorities)
+                .withTreeCreator(ArrayList::new)
+                .withKeyGetter(AuthorityNode::getAuthorityId)
+                .withParentKeyGetter(AuthorityNode::getParentId)
+                .withChildrenGetter(AuthorityNode::getChildren)
+                .withChildrenSetter(AuthorityNode::setChildren);
+
+        List<AuthorityNode> tree = builder.build();
     }
 
     public Long getUserId() {

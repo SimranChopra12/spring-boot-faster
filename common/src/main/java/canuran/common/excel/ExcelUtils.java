@@ -139,50 +139,67 @@ public class ExcelUtils {
     }
 
     private static <T> void writeDataToSheet(Sheet sheet, Class<T> type, List<T> data) {
+        if (sheet == null || type == null || data == null || data.isEmpty()) {
+            return;
+        }
+
         try {
-            if (sheet == null || type == null) {
-                return;
-            }
-            // 读取并写入标题字段
-            Row titleRow = sheet.createRow(0);
-
-            List<Field> dataFields = new ArrayList<>();
-            Field[] fields = type.getDeclaredFields();
-
-            for (int i = 0; i < fields.length; i++) {
-                Field field = fields[i];
-                // 需要获取ExcelColumn注解
-                ExcelColumn excelColumn = field.getAnnotation(ExcelColumn.class);
-                if (excelColumn == null) {
-                    continue;
-                }
-                if (excelColumn.columnWidth() > 0) {
-                    sheet.setColumnWidth(i, excelColumn.columnWidth() * 256);
-                }
-
-                titleRow.createCell(i).setCellValue(excelColumn.value());
-                field.setAccessible(true);
-                dataFields.add(field);
-            }
-
-            // 读取并写入Excel数据
-            if (dataFields.isEmpty() || data == null || data.isEmpty()) {
+            List<Field> dataFields = filterExcelColumns(type.getDeclaredFields());
+            if (dataFields.isEmpty()) {
                 return;
             }
 
-            int rowIndex = 1;
-            for (Object rowData : data) {
-                Row row = sheet.createRow(rowIndex++);
-                for (int i = 0; i < dataFields.size(); i++) {
-                    Field dataField = dataFields.get(i);
-                    Object value = dataField.get(rowData);
-                    row.createCell(i).setCellValue(value == null ? "" : value.toString());
-                }
-            }
+            writeTitleRow(sheet, dataFields);
+            writeDataRows(sheet, data, dataFields);
         } catch (Exception e) {
             LOGGER.error("Generate excel sheet failure", e);
         }
     }
+
+    private static void writeTitleRow(Sheet sheet, List<Field> dataFields) {
+        Row titleRow = sheet.createRow(0);
+
+        for (int i = 0; i < dataFields.size(); i++) {
+            Field field = dataFields.get(i);
+            ExcelColumn excelColumn = field.getAnnotation(ExcelColumn.class);
+
+            if (excelColumn.columnWidth() > 0) {
+                sheet.setColumnWidth(i, excelColumn.columnWidth() * 256);
+            }
+
+            titleRow.createCell(i).setCellValue(excelColumn.value());
+        }
+    }
+
+    private static <T> void writeDataRows(Sheet sheet, List<T> data, List<Field> dataFields) throws IllegalAccessException {
+        int rowIndex = 1;
+
+        for (Object rowData : data) {
+            Row row = sheet.createRow(rowIndex++);
+
+            for (int i = 0; i < dataFields.size(); i++) {
+                Field dataField = dataFields.get(i);
+                Object value = dataField.get(rowData);
+                row.createCell(i).setCellValue(value == null ? "" : value.toString());
+            }
+        }
+    }
+
+    private static List<Field> filterExcelColumns(Field[] fields) {
+        List<Field> dataFields = new ArrayList<>();
+
+        for (Field field : fields) {
+            ExcelColumn excelColumn = field.getAnnotation(ExcelColumn.class);
+
+            if (excelColumn != null) {
+                field.setAccessible(true);
+                dataFields.add(field);
+            }
+        }
+
+        return dataFields;
+    }
+
 
     private static void writeWorkBookToResponse(String fileName, HttpServletResponse response, Workbook workbook) {
         try {

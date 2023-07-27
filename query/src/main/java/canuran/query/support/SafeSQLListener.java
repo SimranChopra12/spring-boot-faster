@@ -19,7 +19,7 @@ import java.util.Map;
  * @author caiyouyuan
  * @since 2018年06月18日
  */
-public class SafeSQLListener implements SQLListener {
+public class SafeSQLListener implements SQLListener, SafeSQLListenerInterface {
 
     @Override
     public void notifyQuery(QueryMetadata md) {
@@ -42,8 +42,12 @@ public class SafeSQLListener implements SQLListener {
     }
 
     @Override
-    public void notifyMerge(RelationalPath<?> entity, QueryMetadata md, List<Path<?>> keys,
-                            List<Path<?>> columns, List<Expression<?>> values, SubQueryExpression<?> subQuery) {
+    public void notifyMerge(RelationalPath<?> relationalPath, QueryMetadata queryMetadata, List<Path<?>> list, List<Path<?>> list1, List<Expression<?>> list2, SubQueryExpression<?> subQueryExpression) {
+
+    }
+
+    @Override
+    public void notifyMerge(Merge merge) {
     }
 
     @Override
